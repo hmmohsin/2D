@@ -1,0 +1,11 @@
+controllerIPAddr 10.1.1.28
+controllerPort 50010
+agentPort 50011
+linkRate 950
+tosMap 4,32,40,56,72,128,152,184,192,224
+initClassRatios 113154,5671937
+loadStatsInterval 2
+flowStatsInterval 5
+workingMode replay
+flowStatsFile flowSize.txt
+loadStatsFile load.txt
