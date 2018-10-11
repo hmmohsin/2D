@@ -1,0 +1,6 @@
+server 10.1.1.28 5001
+sequencer 10.1.1.2 6001
+req_size_dist VL2_CDF.txt
+rate 1000Mbps 100
+threshold 113154 
+threshold 5671937

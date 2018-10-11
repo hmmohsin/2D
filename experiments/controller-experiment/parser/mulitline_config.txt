@@ -1,0 +1,7 @@
+VL2-2D-Offline_0 Base
+VL2-2D-Offline_1 2DC-OTP
+VL2-2D-Offline_2 2DC-OTP-ST
+VL2-2D-Online_30 2DC-Online-30
+VL2-2D-Online_10 2DC-Online-10
+#VL2-2D-Online_2 2DC-Online-EWMA-10
+#VL2-2D-Online_3 2DC-RESILIENCE
