@@ -1,5 +1,6 @@
-controllerIPAddr 10.1.1.28
+controllerIPAddr 10.1.1.4
 controllerPort 50010
+agentIPAddr 10.1.1.5
 agentPort 50011
 linkRate 950
 tosMap 4,32,40,56,72,128,152,184,192,224

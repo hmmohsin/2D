@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <pthread.h>
 
@@ -20,7 +21,7 @@ int initialize(char *ipAddr, int port, queue *q, unsigned int *thresholdsList){
     	struct header *hdr = malloc(sizeof(struct header));
 	data = malloc(sizeof(struct globalDataStruct));
 
-	g_maxClassCount = 1;
+	g_maxClassCount = 10;
 
 	/* check size expansion */		
 	data->g_flowSizeList = malloc(sizeof(struct flowSizeStats));
@@ -146,6 +147,8 @@ int getFlowClass(int flowSize){
 
 	return -1;
 }
+
+/*Need a database handler here*/
 
 /*Updates the container list of application, passed to API during init*/
 int updateThresholdsList()
@@ -315,7 +318,7 @@ void sendFlowStats(){
 	strcpy(data_buf, hdr_buf);
 
 	while(1){
-		printf("Accessing %dth element\n",i);
+		//printf("Accessing %dth element\n",i);
 		flowSize = data->g_flowSizeList->flowSize[i];
 		sprintf(statsStr, "%d", flowSize);
 		

@@ -7,37 +7,39 @@ import logging
 import proto
 import macro
 import helper
+#import rmpDB
+
 
 '''os.system("rm -rf classRatios.log")
 logging.basicConfig(filename="classRatios.log", level=logging.INFO)
 log = logging.getLogger("ex")
 '''
 
-def getClassThresholds(policy):
-	thresholdsList = []
-	for classID in policy.keys():
-		threshold = policy[classID][0]
-		thresholdsList.append(threshold)
-	return thresholdsList		
-
-
-def getClassRates (policy):
-	ratesList = []
-	for classID in policy.keys():
-		rates = policy[classID][1]
-		ratesList.append(rates)
-	return ratesList
-
-
 def thresholdsToCString(policyMap):
 	dataStr=""
 	count = 0
+	#Policy Format: {classID: ((thStart,thEnd), rate )}
+
 	for (classID, threshold) in policyMap.iteritems():
 		if count> 0:
 			dataStr += ","
 		dataStr += str(classID)+","+str(threshold[0][0])+","+str(threshold[0][1])
 		count += 1
 	return dataStr	
+
+def getClassRates (policy):
+        ratesList = []
+        for classID in policy.keys():
+                rates = policy[classID][1]
+                ratesList.append(rates)
+        return ratesList
+
+
+def getClassThresholds(policyMap):
+	classThresholds = {}
+	for (classID, threshold) in policyMap.iteritems():
+                classThresholds[classID] = (threshold[0][0], threshold[0][1])
+        return classThresholds
 
 
 class agent(object):
@@ -70,6 +72,14 @@ class agent(object):
 		agentPort = int(self.config['agentPort'])
 		agentIPAddr = self.config['agentIPAddr']
 		
+		dbHost = self.config['db_host']
+		dbUsername = self.config['db_username']
+		dbPasswd = self.config['db_passwd']
+		dbName = self.config['db_dbname']
+		
+		#self.dbHandle = rmpDB.connect(dbHost, dbUsername, dbPasswd, dbName)
+						
+
 		agentIPAddr = ipAddr
 		self.tosMap = self.config['tosMap'].split(',')
 		self.flowStatDispInterval = self.config['flowStatsInterval']
@@ -264,7 +274,10 @@ class agent(object):
 
 			policyID = proto.getPolicyID(msg)
 			policy = proto.getMsgData(msg)
-			classThresholds = getClassThresholds(policy)
+
+			#HM_Debug: ClassThreshold Old Format 
+			#classThresholds = getClassThresholds(policy)
+
 			classRatios = getClassRates(policy)
 
 			self.currentPolicyID = policyID	
@@ -279,7 +292,7 @@ class agent(object):
 		flowSizes = data.split(",")
 		count = 0
 	
-		print "Received New Flow Stats."
+		#print "Received New Flow Stats."
 
 		for flowSize in flowSizes:
 			if flowSize is not "" and int(flowSize)>0:
@@ -293,7 +306,7 @@ class agent(object):
 		load = data.split(",")
 		count = 0
 
-		print "Received New Load Stats."
+		#print "Received New Load Stats."
 		
 		for loadStat in load:
 			if loadStat is not "":
@@ -331,7 +344,10 @@ class agent(object):
 			
 			if self.sockType[sockDesc] == macro.TYPE_SOCK_APPLICATION:
 				connObj = self.sockList[sockDesc]
-
+			
+				classThresholds = getClassThresholds(policy)
+				#rmpDB.insert_thresholds(self.dbHandle, classThresholds)
+				
 				policyCString = thresholdsToCString(policy) 
 				count = len(policy)
 				msg = proto.makeClassThresholdsCStr(count, policyCString)
@@ -383,21 +399,6 @@ def _enforceClassRatios(ifname, linkRate, classRatios, tosMap):
 			(ifname,int(tosMap[cid]),cid))
 
 
-def getClassThresholds(policy):
-        thresholdsList = []
-        for classID in policy.keys():
-                threshold = policy[classID][0]
-                thresholdsList.append(threshold)
-        return thresholdsList
-
-
-def getClassRates (policy):
-        ratesList = []
-        for classID in policy.keys():
-                rates = policy[classID][1]
-                ratesList.append(rates)
-        return ratesList
-
 
 
 def loadConfig():
@@ -441,14 +442,26 @@ if __name__ == "__main__":
 	config["agentIPAddr"] = ipAddr
 
 	_enforceClassRatios(ifname, linkRate, classRatios, tosMap)
-		
+	
+	#Starts an agent as a daemon	
 	agentHandle = agent(config)	
 	agentHandle.run(ipAddr)
 
 	fssTimer = int(config['flowStatsInterval'])
 	lssTime = int(config['loadStatsInterval'])
 
-	flowStatsSender = threading.Thread(name='eventHandler', target=sendFlowStats, args=(agentHandle,fssTimer,))
+
+	'''Needs to send flow stats and load stats perdiodically
+	The interval of both transmissions could be different so
+	we need to run both transmissions as two separate daemons.
+	flowStatsSender send flow stats to the controller. The
+	load stats transmission is done in the main program in a
+	while loop
+	'''
+	
+
+	flowStatsSender = threading.Thread(name='eventHandler', \
+				target=sendFlowStats, args=(agentHandle,fssTimer,))
 	flowStatsSender.setDaemon(True)
 	flowStatsSender.start()
 
